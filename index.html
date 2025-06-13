@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>RetailCart</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; background: #f2f2f2; }
+    h2 { margin-top: 40px; color: #333; }
+    input, button { margin: 5px; padding: 6px; }
+    button { background-color: #4CAF50; color: white; border: none; cursor: pointer; }
+    button:hover { background-color: #45a049; }
+    table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+    table, th, td { border: 1px solid #ccc; padding: 8px; }
+    th { background: #ddd; }
+  </style>
+</head>
+<body>
+
+  <h1>RetailCart Portal</h1>
+
+  <!-- Product Section -->
+  <h2>🛍️ Products</h2>
+  <table id="productTable"></table>
+  <input id="pname" placeholder="Name">
+  <input id="pdesc" placeholder="Description">
+  <input id="pprice" type="number" placeholder="Price">
+  <input id="pstock" type="number" placeholder="Stock">
+  <button onclick="addProduct()">Add Product</button>
+
+  <!-- User Section -->
+  <h2>👤 Users</h2>
+  <table id="userTable"></table>
+  <input id="uname" placeholder="Name">
+  <input id="uemail" placeholder="Email">
+  <input id="uaddr" placeholder="Address">
+  <button onclick="addUser()">Register User</button>
+
+  <!-- Order Section -->
+  <h2>🧾 Orders</h2>
+  <input id="orderUserId" placeholder="User ID">
+  <input id="orderProductId" placeholder="Product ID">
+  <input id="orderQty" placeholder="Quantity" type="number">
+  <button onclick="placeOrder()">Place Order</button>
+
+  <h3>📜 Order History</h3>
+  <input id="historyUserId" placeholder="User ID">
+  <button onclick="getOrders()">Fetch Orders</button>
+  <ul id="orderList"></ul>
+
+  <script>
+    const productAPI = "https://inventory62-gmb9cefcguamgec9.eastus2-01.azurewebsites.net/products";
+    const userAPI = "https://user62-andkcnfda0epetfd.centralus-01.azurewebsites.net/users";
+    const orderAPI = "https://orders62-bpfngda8dxdha3ge.canadacentral-01.azurewebsites.net/orders";
+
+    // PRODUCT FUNCTIONS
+    function loadProducts() {
+        fetch(`${productAPI}/all`)
+        .then(res => res.json())
+        .then(data => {
+          const table = document.getElementById('productTable');
+          table.innerHTML = "<tr><th>ID</th><th>Name</th><th>Price</th><th>Stock</th></tr>";
+          data.forEach(p => {
+            table.innerHTML += `<tr><td>${p.id}</td><td>${p.name}</td><td>${p.price}</td><td>${p.stock}</td></tr>`;
+          });
+        });
+    }
+
+    function addProduct() {
+      const product = {
+        name: document.getElementById('pname').value,
+        description: document.getElementById('pdesc').value,
+        price: parseFloat(document.getElementById('pprice').value),
+        stock: parseInt(document.getElementById('pstock').value)
+      };
+
+      fetch(`${productAPI}/add`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(product)
+      }).then(() => loadProducts());
+       document.getElementById('pname').value="";
+         document.getElementById('pdesc').value="";
+        document.getElementById('pprice').value="";
+        document.getElementById('pstock').value="";
+    }
+
+    // USER FUNCTIONS
+    function loadUsers() {
+        fetch(`${userAPI}/all`)
+        .then(res => res.json())
+        .then(data => {
+          const table = document.getElementById('userTable');
+          table.innerHTML = "<tr><th>ID</th><th>Name</th><th>Email</th><th>Address</th></tr>";
+          data.forEach(u => {
+            table.innerHTML += `<tr><td>${u.id}</td><td>${u.name}</td><td>${u.email}</td><td>${u.address}</td></tr>`;
+          });
+        });
+    }
+
+    function addUser() {
+      const user = {
+        name: document.getElementById('uname').value,
+        email: document.getElementById('uemail').value,
+        address: document.getElementById('uaddr').value
+      };
+
+      fetch(`${userAPI}/add`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(user)
+      }).then(() => loadUsers());
+ document.getElementById('uname').value="";
+document.getElementById('uemail').value="";
+document.getElementById('uaddr').value="";
+    }
+
+    // ORDER FUNCTIONS
+    function placeOrder() {
+      const order = {
+        userId: parseInt(document.getElementById('orderUserId').value),
+        productId: parseInt(document.getElementById('orderProductId').value),
+        quantity: parseInt(document.getElementById('orderQty').value)
+      };
+
+      fetch(`${orderAPI}/add`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(order)
+      })
+        .then(res => res.json())
+        .then(data => {
+          alert("Order placed successfully! ID: " + data.id);
+        });
+        document.getElementById('orderUserId').value="";
+        document.getElementById('orderProductId').value="";
+        document.getElementById('orderQty').value="";
+    }
+
+    function getOrders() {
+      const userId = document.getElementById('historyUserId').value;
+      fetch(`${orderAPI}/user/${userId}`)
+        .then(res => res.json())
+        .then(data => {
+          const list = document.getElementById('orderList');
+          list.innerHTML = "";
+          data.forEach(o => {
+            list.innerHTML += `<li>Order #${o.id} - Product ${o.productId} x ${o.quantity} = ₹${o.totalPrice}</li>`;
+          });
+        });
+    }
+
+    // INITIAL LOAD
+    loadProducts();
+    loadUsers();
+  </script>
+</body>
+</html>
